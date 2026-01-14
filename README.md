@@ -36,17 +36,27 @@ git clone <repository-url>
 cd AITradeVision-Frontend
 ```
 
-2. Install dependencies
+2. Create environment file
+```bash
+cp .env.example .env
+```
+
+3. Configure environment variables:
+```env
+VITE_API_BASE_URL=http://localhost:3000
+```
+
+4. Install dependencies
 ```bash
 npm install
 ```
 
-3. Start the development server
+5. Start the development server
 ```bash
 npm run dev
 ```
 
-4. Open [http://localhost:5173](http://localhost:5173) in your browser
+6. Open [http://localhost:5173](http://localhost:5173) in your browser
 
 ## Available Scripts
 

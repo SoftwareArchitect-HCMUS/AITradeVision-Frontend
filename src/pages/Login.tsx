@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react"
 import { Link } from "react-router-dom"
+import { useAuth } from "@/hooks/useAuth"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,7 +27,7 @@ type LoginForm = z.infer<typeof loginSchema>
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const { login } = useAuth()
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -37,12 +38,7 @@ export default function Login() {
   })
 
   const onSubmit = async (data: LoginForm) => {
-    setIsLoading(true)
-    console.log("Login data:", data)
-
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 2000)
+    await login.mutateAsync(data)
   }
 
   return (
@@ -130,9 +126,9 @@ export default function Login() {
                 <Button
                   type="submit"
                   className="w-full bg-bullish hover:bg-bullish/90"
-                  disabled={isLoading}
+                  disabled={login.isPending}
                 >
-                  {isLoading ? (
+                  {login.isPending ? (
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                       Signing in...

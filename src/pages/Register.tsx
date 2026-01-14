@@ -2,8 +2,9 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Check } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from "lucide-react"
 import { Link } from "react-router-dom"
+import { useAuth } from "@/hooks/useAuth"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,64 +19,28 @@ import {
 } from "@/components/ui/form"
 
 const registerSchema = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  password: z.string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 })
 
 type RegisterForm = z.infer<typeof registerSchema>
 
-const passwordRequirements = [
-  { text: "At least 8 characters", regex: /.{8,}/ },
-  { text: "One uppercase letter", regex: /[A-Z]/ },
-  { text: "One lowercase letter", regex: /[a-z]/ },
-  { text: "One number", regex: /[0-9]/ },
-]
-
 export default function Register() {
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const { register } = useAuth()
 
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
       email: "",
+      username: "",
       password: "",
-      confirmPassword: "",
     },
   })
 
-  const password = form.watch("password")
-
-  const getPasswordStrength = (password: string) => {
-    let strength = 0
-    passwordRequirements.forEach(req => {
-      if (req.regex.test(password)) strength++
-    })
-    return strength
-  }
-
-  const passwordStrength = getPasswordStrength(password)
-
   const onSubmit = async (data: RegisterForm) => {
-    setIsLoading(true)
-    console.log("Register data:", data)
-
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 2000)
+    await register.mutateAsync(data)
   }
 
   return (
@@ -98,49 +63,26 @@ export default function Register() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>First Name</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              placeholder="John"
-                              className="pl-10"
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Last Name</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              placeholder="Doe"
-                              className="pl-10"
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Enter your username"
+                            className="pl-10"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={form.control}
@@ -174,7 +116,7 @@ export default function Register() {
                           <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input
                             type={showPassword ? "text" : "password"}
-                            placeholder="Create a strong password"
+                            placeholder="Enter your password"
                             className="pl-10 pr-10"
                             {...field}
                           />
@@ -191,74 +133,6 @@ export default function Register() {
                           </button>
                         </div>
                       </FormControl>
-                      {password && (
-                        <div className="space-y-2">
-                          <div className="flex gap-1">
-                            {[...Array(4)].map((_, i) => (
-                              <div
-                                key={i}
-                                className={`h-1 flex-1 rounded-full ${
-                                  i < passwordStrength
-                                    ? passwordStrength <= 2
-                                      ? "bg-bearish"
-                                      : passwordStrength === 3
-                                      ? "bg-neutral"
-                                      : "bg-bullish"
-                                    : "bg-muted"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <div className="space-y-1">
-                            {passwordRequirements.map((req, index) => (
-                              <div
-                                key={index}
-                                className={`flex items-center gap-2 text-xs ${
-                                  req.regex.test(password)
-                                    ? "text-bullish"
-                                    : "text-muted-foreground"
-                                }`}
-                              >
-                                <Check className="h-3 w-3" />
-                                {req.text}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            type={showConfirmPassword ? "text" : "password"}
-                            placeholder="Confirm your password"
-                            className="pl-10 pr-10"
-                            {...field}
-                          />
-                          <button
-                            type="button"
-                            className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          >
-                            {showConfirmPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -267,9 +141,9 @@ export default function Register() {
                 <Button
                   type="submit"
                   className="w-full bg-bullish hover:bg-bullish/90"
-                  disabled={isLoading}
+                  disabled={register.isPending}
                 >
-                  {isLoading ? (
+                  {register.isPending ? (
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                       Creating account...
