@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ThemeProvider } from "@/components/ThemeProvider"
 import App from "./App"
+import { UpgradeVIPModal } from "@/components/UpgradeVIPModal"
 
 const queryClient = new QueryClient()
 
@@ -16,6 +17,7 @@ const AppRouter = () => (
         <Sonner />
         <BrowserRouter>
           <App />
+          <UpgradeVIPModal />
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>

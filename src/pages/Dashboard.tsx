@@ -4,10 +4,15 @@ import { CandlestickChart } from "@/components/CandlestickChart"
 import { RightPanel } from "@/components/RightPanel"
 import { type TradingPair, type Timeframe } from "@/types/trading"
 import { useSymbolStore } from "@/store/useSymbolStore"
+import { useAuthStore } from "@/store/useAuthStore"
 
 const Dashboard = () => {
   const { selectedSymbol, setSelectedSymbol } = useSymbolStore()
-  const [isVIP, setIsVIP] = useState(false)
+  const { user } = useAuthStore()
+  
+  // Use isVIP from authenticated user, default to false if not set
+  const isVIP = user?.isVIP ?? false
+  
   const [isPanelOpen, setIsPanelOpen] = useState(true)
   const [timeframe, setTimeframe] = useState<Timeframe>("1h")
 
@@ -16,7 +21,6 @@ const Dashboard = () => {
       <Header
         onPairChange={(pair) => setSelectedSymbol(pair)}
         isVIP={isVIP}
-        onVIPChange={setIsVIP}
         isPanelOpen={isPanelOpen}
         onPanelToggle={() => setIsPanelOpen(!isPanelOpen)}
       />

@@ -56,6 +56,29 @@ export function useAuth() {
     },
   })
 
+  const upgradeToVIP = useMutation({
+    mutationFn: async () => {
+      const response = await api.post('/auth/upgrade-vip')
+      return response.data
+    },
+    onSuccess: (data) => {
+      if (data.success && data.data) {
+        setAuth(data.data.token, data.data.user)
+        toast({
+          title: '🎉 Upgraded to VIP!',
+          description: 'You now have access to AI Analysis features.',
+        })
+      }
+    },
+    onError: (error: Error & { response?: { data?: { message?: string } } }) => {
+      toast({
+        title: 'Upgrade failed',
+        description: error.response?.data?.message || 'Failed to upgrade to VIP',
+        variant: 'destructive',
+      })
+    },
+  })
+
   const logout = () => {
     clearAuth()
     navigate('/login')
@@ -69,5 +92,7 @@ export function useAuth() {
     login,
     register,
     logout,
+    upgradeToVIP,
   }
 }
+
