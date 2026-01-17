@@ -141,8 +141,8 @@ export function AIAnalysisCard({ pair, isVIP }: AIAnalysisCardProps) {
                     key={index}
                     className={`flex items-start gap-2 p-2 rounded text-sm ${
                       signal.type === "bullish"
-                        ? "bg-primary/10 text-primary"
-                        : "bg-destructive/10 text-destructive"
+                        ? "bg-bullish/10 text-bullish"
+                        : "bg-bearish/10 text-bearish"
                     }`}
                   >
                     {signal.type === "bullish" ? (
