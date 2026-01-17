@@ -1,20 +1,19 @@
-import { Moon, Sun, PanelRightClose, PanelRightOpen, Crown, Brain, LogOut } from "lucide-react";
+import { Moon, Sun, PanelRightClose, PanelRightOpen, Crown, Brain, LogOut, Sparkles } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Combobox } from "@/components/ui/combobox";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useSymbols } from "@/hooks/useSymbols";
 import { useSymbolStore } from "@/store/useSymbolStore";
+import { useVIPModalStore } from "@/store/useVIPModalStore";
 
 import { type TradingPair } from "@/types/trading";
 
 interface HeaderProps {
   onPairChange: (pair: TradingPair) => void;
   isVIP: boolean;
-  onVIPChange: (value: boolean) => void;
   isPanelOpen: boolean;
   onPanelToggle: () => void;
 }
@@ -22,15 +21,15 @@ interface HeaderProps {
 export function Header({
   onPairChange,
   isVIP,
-  onVIPChange,
   isPanelOpen,
   onPanelToggle,
-}: Omit<HeaderProps, 'selectedPair'>) {
+}: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const { logout } = useAuth();
   const { user } = useAuthStore();
   const { selectedSymbol, setSelectedSymbol } = useSymbolStore();
   const { data: symbols = [], isLoading: symbolsLoading } = useSymbols();
+  const { openModal } = useVIPModalStore();
 
   const symbolOptions = symbols.map(symbol => ({
     value: symbol,
@@ -64,19 +63,23 @@ export function Header({
           disabled={symbolsLoading}
         />
 
-        {/* VIP Toggle */}
-        <div className="flex items-center gap-2">
-          <Crown className={`h-4 w-4 ${isVIP ? "text-yellow-500" : "text-muted-foreground"}`} />
-          <Label htmlFor="vip-toggle" className="text-sm text-muted-foreground">
-            VIP
-          </Label>
-          <Switch
-            id="vip-toggle"
-            checked={isVIP}
-            onCheckedChange={onVIPChange}
-            className="data-[state=checked]:bg-yellow-500"
-          />
-        </div>
+        {/* VIP Status Badge or Upgrade Button */}
+        {isVIP ? (
+          <Badge className="bg-gradient-to-r from-yellow-500 to-amber-500 text-black font-bold gap-1 px-3 py-1">
+            <Crown className="h-3.5 w-3.5" />
+            VIP Member
+          </Badge>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={openModal}
+            className="gap-1.5 border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-400 hover:border-yellow-500"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Upgrade to VIP
+          </Button>
+        )}
       </div>
 
       {/* Right Controls */}

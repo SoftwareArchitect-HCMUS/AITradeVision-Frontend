@@ -6,6 +6,7 @@ import { useSymbolStore } from "@/store/useSymbolStore";
 import { useAIInsights } from "@/hooks/useAIInsights";
 import type { AIInsightData } from "@/services/market.service";
 import { ScrollArea } from "./ui/scroll-area";
+import { useVIPModalStore } from "@/store/useVIPModalStore";
 
 
 interface AIAnalysisCardProps {
@@ -38,6 +39,7 @@ function mapAIInsightsToAnalysis(insights: AIInsightData[]): { prediction: "UP" 
 
 export function AIAnalysisCard({ pair, isVIP }: AIAnalysisCardProps) {
   const { selectedSymbol } = useSymbolStore();
+  const { openModal } = useVIPModalStore();
   const symbolToCheck = (selectedSymbol || pair) as TradingPair;
   const { data: insights, isLoading } = useAIInsights(symbolToCheck);
 
@@ -103,14 +105,14 @@ export function AIAnalysisCard({ pair, isVIP }: AIAnalysisCardProps) {
                 </div>
               </div>
 
-              <div>
+              <div className="mt-4">
                 <h4 className="text-sm font-semibold mb-2">Analysis</h4>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {analysis.reason}
                 </p>
               </div>
 
-              <div>
+              <div className="mt-4">
                 <h4 className="text-sm font-semibold mb-2">Key Signals</h4>
                 <div className="space-y-2">
                   {analysis.signals.map((signal, index: number) => (
@@ -147,15 +149,18 @@ export function AIAnalysisCard({ pair, isVIP }: AIAnalysisCardProps) {
           </ScrollArea>
         ) : (
           <div className="flex flex-col items-center justify-center p-6 h-full">
-            <div className="p-4 rounded-full bg-secondary mb-4">
+            <div className="p-4 rounded-full bg-gradient-to-br from-secondary to-background border border-border shadow-inner mb-4">
               <Lock className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h4 className="text-lg font-semibold mb-2 text-center">VIP Access Required</h4>
-            <p className="text-sm text-muted-foreground text-center mb-4">
-              Unlock AI-powered market insights and predictions
+            <h4 className="text-lg font-bold mb-1 text-center">VIP Access Required</h4>
+            <p className="text-sm text-muted-foreground text-center mb-6 max-w-[200px]">
+              Unlock real-time AI market predictions and expert signals.
             </p>
-            <Button className="bg-yellow-500 hover:bg-yellow-600 text-black font-medium">
-              <Crown className="h-4 w-4 mr-2" />
+            <Button 
+                onClick={openModal}
+                className="bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-black font-bold shadow-lg shadow-yellow-500/20 gap-2 w-full max-w-[180px]"
+            >
+              <Crown className="h-4 w-4" />
               Upgrade to VIP
             </Button>
           </div>

@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, Wifi, WifiOff } from "lucide-react";
 import { type TradingPair, type Timeframe } from "@/types/trading";
 import { TradingChart } from "./TradingChart";
-import { MarketService } from "@/services/market.service";
+import { useWebSocketPrice } from "@/hooks/useWebSocketPrice";
 import type { TimeInterval } from "@/services/market.service";
 
 interface CandlestickChartProps {
@@ -12,52 +12,27 @@ interface CandlestickChartProps {
 }
 
 const timeframeToInterval: Record<Timeframe, TimeInterval> = {
-  "1H": "1h",
-  "4H": "4h",
-  "1D": "1d",
-  "1W": "1d",
+  "1m": "1m",
+  "5m": "5m",
+  "1h": "1h",
+  "1d": "1d",
 };
 
 export function CandlestickChart({ pair, timeframe, onTimeframeChange }: CandlestickChartProps) {
-  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
-  const [priceChange, setPriceChange] = useState<number>(0);
-  const [priceChangePercent, setPriceChangePercent] = useState<string>("0.00");
   const [chartHeight, setChartHeight] = useState<number>(400);
   const headerRef = useRef<HTMLDivElement>(null);
+  
+  // Use WebSocket for real-time price instead of polling
+  const { price, priceChange, isConnected } = useWebSocketPrice(pair);
 
-  useEffect(() => {
-    const fetchRealtimePrice = async () => {
-      try {
-        const marketService = MarketService.getInstance();
-        const response = await marketService.getRealtimePrice(pair);
-
-        if (response.success && response.data) {
-          setCurrentPrice(response.data.price);
-
-          if (response.data.change24h !== undefined) {
-            setPriceChange(response.data.change24h);
-            setPriceChangePercent(Math.abs(response.data.change24h).toFixed(2));
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch real-time price:", error);
-      }
-    };
-
-    fetchRealtimePrice();
-
-    const interval = setInterval(fetchRealtimePrice, 5000);
-
-    return () => clearInterval(interval);
-  }, [pair]);
-
-  const isPositive = priceChange >= 0;
+  const isPositive = (priceChange ?? 0) >= 0;
+  const priceChangePercent = priceChange !== null ? Math.abs(priceChange).toFixed(2) : "0.00";
 
   useEffect(() => {
     const calculateChartHeight = () => {
       const headerHeight = headerRef.current?.offsetHeight || 48;
-      const availableHeight = window.innerHeight - headerHeight - 60; // Reserve space for other UI elements
-      setChartHeight(Math.max(availableHeight, 300)); // Minimum height of 300px
+      const availableHeight = window.innerHeight - headerHeight - 60;
+      setChartHeight(Math.max(availableHeight, 300));
     };
 
     calculateChartHeight();
@@ -72,9 +47,9 @@ export function CandlestickChart({ pair, timeframe, onTimeframeChange }: Candles
         <div className="flex items-center gap-4">
           <h2 className="text-2xl font-bold">{pair}</h2>
           <span className="text-xl font-mono">
-            ${currentPrice ? currentPrice.toLocaleString() : "---"}
+            ${price ? price.toLocaleString() : "---"}
           </span>
-          {currentPrice && (
+          {price && (
             <span
               className={`flex items-center gap-1 text-sm font-medium px-2 py-0.5 rounded ${
                 isPositive
@@ -91,9 +66,25 @@ export function CandlestickChart({ pair, timeframe, onTimeframeChange }: Candles
               {priceChangePercent}%
             </span>
           )}
+          {/* WebSocket connection indicator */}
+          <span
+            className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded ${
+              isConnected
+                ? "bg-bullish/10 text-bullish"
+                : "bg-bearish/10 text-bearish"
+            }`}
+            title={isConnected ? "Real-time connected" : "Reconnecting..."}
+          >
+            {isConnected ? (
+              <Wifi className="h-3 w-3" />
+            ) : (
+              <WifiOff className="h-3 w-3" />
+            )}
+            {isConnected ? "Live" : "Offline"}
+          </span>
         </div>
         <div className="flex space-x-2">
-          {(["1H", "4H", "1D", "1W"] as Timeframe[]).map((tf) => (
+          {(["1m", "5m", "1h", "1d"] as Timeframe[]).map((tf) => (
             <button
               key={tf}
               onClick={() => onTimeframeChange(tf)}
