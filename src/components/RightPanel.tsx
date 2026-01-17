@@ -32,10 +32,10 @@ export function RightPanel({ pair, isVIP, isOpen }: RightPanelProps) {
             News
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="ai" className="flex-1 m-0 overflow-hidden">
+        <TabsContent value="ai" className="flex-1 m-0 min-h-0">
           <AIAnalysisCard pair={pair} isVIP={isVIP} />
         </TabsContent>
-        <TabsContent value="news" className="flex-1 m-0 overflow-hidden">
+        <TabsContent value="news" className="flex-1 m-0 min-h-0">
           <NewsFeed />
         </TabsContent>
       </Tabs>

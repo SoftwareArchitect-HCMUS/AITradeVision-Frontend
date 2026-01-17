@@ -1,4 +1,3 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { NewsCard } from "./NewsCard";
 import { Newspaper } from "lucide-react";
 
@@ -71,16 +70,16 @@ const newsData: NewsItem[] = [
 
 export function NewsFeed() {
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 p-4 border-b border-border">
+    <div className="flex flex-col h-full min-h-0">
+      <div className="flex items-center gap-2 p-4 border-b border-border flex-shrink-0">
         <Newspaper className="h-4 w-4 text-muted-foreground" />
         <h3 className="font-semibold">Latest News</h3>
       </div>
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-y-auto">
         {newsData.map((news) => (
           <NewsCard key={news.id} news={news} />
         ))}
-      </ScrollArea>
+      </div>
     </div>
   );
 }

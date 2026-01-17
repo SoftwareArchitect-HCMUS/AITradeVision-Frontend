@@ -3,18 +3,18 @@ import { Header } from "@/components/Header"
 import { CandlestickChart } from "@/components/CandlestickChart"
 import { RightPanel } from "@/components/RightPanel"
 import { type TradingPair, type Timeframe } from "@/types/trading"
+import { useSymbolStore } from "@/store/useSymbolStore"
 
 const Dashboard = () => {
-  const [selectedPair, setSelectedPair] = useState<TradingPair>("BTC/USDT")
+  const { selectedSymbol, setSelectedSymbol } = useSymbolStore()
   const [isVIP, setIsVIP] = useState(false)
   const [isPanelOpen, setIsPanelOpen] = useState(true)
   const [timeframe, setTimeframe] = useState<Timeframe>("1D")
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background">
       <Header
-        selectedPair={selectedPair}
-        onPairChange={setSelectedPair}
+        onPairChange={(pair) => setSelectedSymbol(pair)}
         isVIP={isVIP}
         onVIPChange={setIsVIP}
         isPanelOpen={isPanelOpen}
@@ -24,13 +24,13 @@ const Dashboard = () => {
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 bg-card overflow-hidden">
           <CandlestickChart
-            pair={selectedPair}
+            pair={selectedSymbol as TradingPair}
             timeframe={timeframe}
             onTimeframeChange={setTimeframe}
           />
         </div>
 
-        <RightPanel pair={selectedPair} isVIP={isVIP} isOpen={isPanelOpen} />
+        <RightPanel pair={selectedSymbol as TradingPair} isVIP={isVIP} isOpen={isPanelOpen} />
       </div>
     </div>
   )

@@ -3,22 +3,15 @@ import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useSymbols } from "@/hooks/useSymbols";
+import { useSymbolStore } from "@/store/useSymbolStore";
 
 import { type TradingPair } from "@/types/trading";
 
-const tradingPairs: TradingPair[] = ["BTC/USDT", "ETH/USDT", "SOL/USDT"];
-
 interface HeaderProps {
-  selectedPair: TradingPair;
   onPairChange: (pair: TradingPair) => void;
   isVIP: boolean;
   onVIPChange: (value: boolean) => void;
@@ -27,16 +20,22 @@ interface HeaderProps {
 }
 
 export function Header({
-  selectedPair,
   onPairChange,
   isVIP,
   onVIPChange,
   isPanelOpen,
   onPanelToggle,
-}: HeaderProps) {
+}: Omit<HeaderProps, 'selectedPair'>) {
   const { theme, setTheme } = useTheme();
   const { logout } = useAuth();
   const { user } = useAuthStore();
+  const { selectedSymbol, setSelectedSymbol } = useSymbolStore();
+  const { data: symbols = [], isLoading: symbolsLoading } = useSymbols();
+
+  const symbolOptions = symbols.map(symbol => ({
+    value: symbol,
+    label: symbol
+  }));
 
   return (
     <header className="h-12 border-b border-border bg-card px-4 flex items-center justify-between">
@@ -50,19 +49,20 @@ export function Header({
 
       {/* Center Controls */}
       <div className="flex items-center gap-6">
-        {/* Pair Selector */}
-        <Select value={selectedPair} onValueChange={(v) => onPairChange(v as TradingPair)}>
-          <SelectTrigger className="w-[140px] bg-secondary border-border">
-            <SelectValue placeholder="Select pair" />
-          </SelectTrigger>
-          <SelectContent>
-            {tradingPairs.map((pair) => (
-              <SelectItem key={pair} value={pair}>
-                {pair}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Symbol Selector with Search */}
+        <Combobox
+          options={symbolOptions}
+          value={selectedSymbol}
+          onValueChange={(value) => {
+            setSelectedSymbol(value);
+            onPairChange(value as TradingPair);
+          }}
+          placeholder="Select symbol..."
+          searchPlaceholder="Search symbols..."
+          emptyMessage="No symbols found."
+          className="w-[280px]"
+          disabled={symbolsLoading}
+        />
 
         {/* VIP Toggle */}
         <div className="flex items-center gap-2">

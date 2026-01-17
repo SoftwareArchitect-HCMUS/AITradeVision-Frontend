@@ -15,6 +15,18 @@ export interface RealtimePriceData {
   change24h?: number;
 }
 
+export interface AIInsightData {
+  id: number;
+  newsId: number;
+  symbol: string;
+  sentiment: 'positive' | 'negative' | 'neutral';
+  summary: string;
+  reasoning: string;
+  prediction: 'UP' | 'DOWN' | 'NEUTRAL';
+  confidence: number;
+  createdAt: string;
+}
+
 export type TimeInterval = '1s' | '1m' | '5m' | '15m' | '1h' | '4h' | '1d';
 
 export interface MarketHistoryQuery {
@@ -45,111 +57,73 @@ export class MarketService {
 
   async getHistory(query: MarketHistoryQuery): Promise<MarketResponse<OHLCVData[]>> {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const mockData = this.generateMockOHLCVData(query);
-      return {
-        success: true,
-        data: mockData
-      };
-    } catch (error) {
+      const api = (await import('@/lib/api')).default;
+      const params = new URLSearchParams({
+        symbol: query.symbol,
+        interval: query.interval,
+        ...(query.limit && { limit: query.limit.toString() }),
+        ...(query.startTime && { startTime: query.startTime }),
+        ...(query.endTime && { endTime: query.endTime }),
+      });
+      const response = await api.get(`/market/history?${params}`);
+      return response.data;
+    } catch (error: any) {
       return {
         success: false,
         data: [],
-        message: 'Failed to fetch market history'
+        message: error.response?.data?.message || 'Failed to fetch market history'
       };
     }
   }
 
   async getRealtimePrice(symbol: string): Promise<MarketResponse<RealtimePriceData>> {
     try {
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      const mockData = this.generateMockRealtimePrice(symbol);
-      return {
-        success: true,
-        data: mockData
-      };
-    } catch (error) {
+      const api = (await import('@/lib/api')).default;
+      const response = await api.get(`/market/realtime?symbol=${symbol}`);
+      return response.data;
+    } catch (error: any) {
       return {
         success: false,
         data: {} as RealtimePriceData,
-        message: 'Failed to fetch real-time price'
+        message: error.response?.data?.message || 'Failed to fetch real-time price'
       };
     }
   }
 
-  private generateMockOHLCVData(query: MarketHistoryQuery): OHLCVData[] {
-    const { symbol, interval, limit = 100 } = query;
-    const data: OHLCVData[] = [];
-
-    let currentPrice = this.getBasePrice(symbol);
-    const now = Date.now();
-
-    const intervalMs = this.getIntervalMs(interval);
-
-    for (let i = limit - 1; i >= 0; i--) {
-      const timestamp = now - (i * intervalMs);
-
-      const volatility = currentPrice * 0.02;
-      const open = currentPrice + (Math.random() - 0.5) * volatility;
-
-      const change = (Math.random() - 0.5) * volatility * 2;
-      const close = open + change;
-
-      const high = Math.max(open, close) + Math.random() * volatility * 0.5;
-      const low = Math.min(open, close) - Math.random() * volatility * 0.5;
-
-      const volume = Math.random() * 1000 + 100;
-
-      data.push({
-        timestamp,
-        open: Math.round(open * 100) / 100,
-        high: Math.round(high * 100) / 100,
-        low: Math.round(low * 100) / 100,
-        close: Math.round(close * 100) / 100,
-        volume: Math.round(volume * 100) / 100
-      });
-
-      currentPrice = close;
+  async getSupportedSymbols(): Promise<MarketResponse<string[]>> {
+    try {
+      const api = (await import('@/lib/api')).default;
+      const response = await api.get('/market/symbols');
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || 'Failed to fetch supported symbols'
+      };
     }
-
-    return data;
   }
 
-  private generateMockRealtimePrice(symbol: string): RealtimePriceData {
-    const basePrice = this.getBasePrice(symbol);
-    const change = (Math.random() - 0.5) * basePrice * 0.05;
-    const price = basePrice + change;
+  async getAIInsights(symbol?: string, limit: number = 10): Promise<MarketResponse<AIInsightData[]>> {
+    try {
+      const api = (await import('@/lib/api')).default;
+      const params = new URLSearchParams();
+      if (symbol) params.append('symbol', symbol);
+      params.append('limit', limit.toString());
 
-    return {
-      symbol,
-      price: Math.round(price * 100) / 100,
-      timestamp: Date.now(),
-      volume24h: Math.round((Math.random() * 1000000 + 100000) * 100) / 100,
-      change24h: Math.round((change / basePrice * 100) * 100) / 100
-    };
+      const response = await api.get(`/ai/insights?${params}`);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || 'Failed to fetch AI insights'
+      };
+    }
   }
 
-  private getBasePrice(symbol: string): number {
-    const prices: Record<string, number> = {
-      'BTCUSDT': 50000,
-      'ETHUSDT': 3000,
-      'SOLUSDT': 100
-    };
-    return prices[symbol] || 1000;
-  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
-  private getIntervalMs(interval: TimeInterval): number {
-    const intervals: Record<TimeInterval, number> = {
-      '1s': 1000,
-      '1m': 60000,
-      '5m': 300000,
-      '15m': 900000,
-      '1h': 3600000,
-      '4h': 14400000,
-      '1d': 86400000
-    };
-    return intervals[interval] || 60000;
-  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 }
