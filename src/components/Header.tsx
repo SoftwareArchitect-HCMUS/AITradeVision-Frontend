@@ -39,7 +39,7 @@ export function Header({
   const { user } = useAuthStore();
 
   return (
-    <header className="h-14 border-b border-border bg-card px-4 flex items-center justify-between">
+    <header className="h-12 border-b border-border bg-card px-4 flex items-center justify-between">
       {/* Logo */}
       <div className="flex items-center gap-2">
         <Brain className="h-7 w-7 text-bullish" />

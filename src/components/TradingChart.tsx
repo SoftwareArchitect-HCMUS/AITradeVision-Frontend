@@ -6,7 +6,7 @@ import type { TimeInterval } from '@/services/market.service';
 interface TradingChartProps {
   symbol: string;
   interval: TimeInterval;
-  height?: number;
+  height?: number | string;
   className?: string;
 }
 
@@ -59,7 +59,7 @@ export function TradingChart({
     }],
     chart: {
       type: 'candlestick',
-      height: height,
+      height: typeof height === 'number' ? height : '100%',
       background: 'hsl(var(--background))',
       foreColor: 'hsl(var(--foreground))',
       toolbar: {
@@ -67,6 +67,20 @@ export function TradingChart({
       },
       zoom: {
         enabled: true
+      },
+      responsive: [{
+        breakpoint: 768,
+        options: {
+          chart: {
+            height: '100%'
+          }
+        }
+      }],
+      margin: {
+        top: 10,
+        right: 20,
+        bottom: 120,
+        left: 60
       }
     },
     title: {
@@ -80,8 +94,19 @@ export function TradingChart({
       type: 'datetime',
       labels: {
         style: {
-          colors: 'hsl(var(--muted-foreground))'
-        }
+          colors: 'hsl(var(--muted-foreground))',
+          fontSize: '11px'
+        },
+        rotate: -30,
+        offsetY: 10
+      },
+      axisTicks: {
+        show: true,
+        color: 'hsl(var(--chart-axis))'
+      },
+      axisBorder: {
+        show: true,
+        color: 'hsl(var(--chart-axis))'
       }
     },
     yaxis: {
@@ -144,7 +169,7 @@ export function TradingChart({
   }, [chartData]);
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative h-full w-full ${className}`}>
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
           <div className="flex items-center gap-2">
@@ -163,7 +188,7 @@ export function TradingChart({
         </div>
       )}
 
-      <div id="trading-chart" className="w-full" style={{ height: `${height}px` }} />
+      <div id="trading-chart" className="w-full" style={{ height: typeof height === 'number' ? `${height}px` : '100%' }} />
     </div>
   );
 }

@@ -11,7 +11,7 @@ const Dashboard = () => {
   const [timeframe, setTimeframe] = useState<Timeframe>("1D")
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background">
       <Header
         selectedPair={selectedPair}
         onPairChange={setSelectedPair}
