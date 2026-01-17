@@ -1,86 +1,139 @@
 import { NewsCard } from "./NewsCard";
 import { Newspaper } from "lucide-react";
+import { useInfiniteNews } from "@/hooks/useNews";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { NewsDetailPanel } from "./NewsDetailPanel";
 
 interface NewsItem {
   id: string;
   title: string;
   source: string;
-  sentiment: "positive" | "negative" | "neutral";
   timestamp: Date;
+  summary?: string;
+  fullText: string;
+  url: string;
 }
 
-const newsData: NewsItem[] = [
-  {
-    id: "1",
-    title: "Bitcoin ETF Inflows Surge to Record $1.2B as Institutional Interest Grows",
-    source: "CoinDesk",
-    sentiment: "positive",
-    timestamp: new Date(Date.now() - 1000 * 60 * 30),
-  },
-  {
-    id: "2",
-    title: "Ethereum Foundation Announces Major Protocol Upgrade for Q2 2025",
-    source: "Binance",
-    sentiment: "positive",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-  },
-  {
-    id: "3",
-    title: "SEC Delays Decision on Altcoin ETF Applications",
-    source: "CryptoSlate",
-    sentiment: "neutral",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4),
-  },
-  {
-    id: "4",
-    title: "Whale Alert: Large BTC Transfer to Unknown Wallet Raises Concerns",
-    source: "Whale Alert",
-    sentiment: "negative",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
-  },
-  {
-    id: "5",
-    title: "Major Bank Announces Crypto Custody Services for Institutional Clients",
-    source: "Bloomberg",
-    sentiment: "positive",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8),
-  },
-  {
-    id: "6",
-    title: "Market Analysis: Trading Volume Remains Steady Amid Price Consolidation",
-    source: "TradingView",
-    sentiment: "neutral",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
-  },
-  {
-    id: "7",
-    title: "Regulatory Uncertainty in Asia Pacific Region Impacts Altcoin Prices",
-    source: "Reuters",
-    sentiment: "negative",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 18),
-  },
-  {
-    id: "8",
-    title: "DeFi Protocol TVL Reaches New All-Time High of $150B",
-    source: "DeFi Llama",
-    sentiment: "positive",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-  },
-];
+// Map NewsData from backend to NewsItem for frontend
+function mapNewsDataToNewsItem(newsData: import('@/services/market.service').NewsData[]): NewsItem[] {
+  return newsData.map(news => ({
+    id: news.id.toString(),
+    title: news.title,
+    source: news.source,
+    timestamp: new Date(news.publishTime),
+    summary: news.summary,
+    fullText: news.fullText,
+    url: news.url
+  }));
+}
 
 export function NewsFeed() {
+  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError
+  } = useInfiniteNews();
+
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  const newsItems = (data as any)?.pages?.flatMap((page: any) => mapNewsDataToNewsItem(page.news)) ?? [];
+
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      if (loadMoreRef.current) {
+        observer.unobserve(loadMoreRef.current);
+      }
+    };
+  }, [loadMore]);
+
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <>
+      <div className="flex flex-col h-full min-h-0">
       <div className="flex items-center gap-2 p-4 border-b border-border flex-shrink-0">
         <Newspaper className="h-4 w-4 text-muted-foreground" />
         <h3 className="font-semibold">Latest News</h3>
       </div>
       <div className="flex-1 overflow-y-auto">
-        {newsData.map((news) => (
-          <NewsCard key={news.id} news={news} />
-        ))}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm text-muted-foreground">Loading news...</span>
+            </div>
+          </div>
+        ) : isError ? (
+          <div className="p-4 text-center">
+            <p className="text-sm text-muted-foreground">
+              Failed to load news. Please try again later.
+            </p>
+          </div>
+        ) : newsItems.length === 0 ? (
+          <div className="p-4 text-center">
+            <p className="text-sm text-muted-foreground">
+              No news available at the moment.
+            </p>
+          </div>
+        ) : (
+          <>
+            {          newsItems.map((news: NewsItem) => (
+            <NewsCard key={news.id} news={news} onClick={(selectedNews) => setSelectedNews(selectedNews)} />
+          ))}
+
+            {hasNextPage && (
+              <div ref={loadMoreRef} className="flex items-center justify-center py-4">
+                {isFetchingNextPage ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm text-muted-foreground">Loading more news...</span>
+                  </div>
+                ) : (
+                  <div className="h-4" />
+                )}
+              </div>
+            )}
+
+            {!hasNextPage && newsItems.length > 0 && (
+              <div className="p-4 text-center">
+                <p className="text-xs text-muted-foreground">
+                  No more news to load
+                </p>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
+
+    <NewsDetailPanel
+      news={selectedNews}
+      isOpen={!!selectedNews}
+      onClose={() => setSelectedNews(null)}
+    />
+    </>
   );
 }
 

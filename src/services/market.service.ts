@@ -27,6 +27,25 @@ export interface AIInsightData {
   createdAt: string;
 }
 
+export interface NewsData {
+  id: number;
+  title: string;
+  summary?: string;
+  fullText: string;
+  tickers: string[];
+  source: string;
+  publishTime: string;
+  url: string;
+  createdAt: string;
+}
+
+export interface NewsListResponse {
+  news: NewsData[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export type TimeInterval = '1s' | '1m' | '5m' | '15m' | '1h' | '4h' | '1d';
 
 export interface MarketHistoryQuery {
@@ -118,6 +137,25 @@ export class MarketService {
         success: false,
         data: [],
         message: error.response?.data?.message || 'Failed to fetch AI insights'
+      };
+    }
+  }
+
+  async getNews(limit: number = 20, page: number = 1): Promise<MarketResponse<NewsListResponse>> {
+    try {
+      const api = (await import('@/lib/api')).default;
+      const params = new URLSearchParams({
+        limit: limit.toString(),
+        page: page.toString()
+      });
+
+      const response = await api.get(`/news/latest?${params}`);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: { news: [], total: 0, page: 1, limit: 20 },
+        message: error.response?.data?.message || 'Failed to fetch news'
       };
     }
   }
