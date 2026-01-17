@@ -3,6 +3,7 @@ import { Newspaper } from "lucide-react";
 import { useInfiniteNews } from "@/hooks/useNews";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NewsDetailPanel } from "./NewsDetailPanel";
+import { ScrollArea } from "./ui/scroll-area";
 
 interface NewsItem {
   id: string;
@@ -77,7 +78,7 @@ export function NewsFeed() {
         <Newspaper className="h-4 w-4 text-muted-foreground" />
         <h3 className="font-semibold">Latest News</h3>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <ScrollArea className="flex-1">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <div className="flex items-center gap-2">
@@ -125,7 +126,7 @@ export function NewsFeed() {
             )}
           </>
         )}
-      </div>
+      </ScrollArea>
     </div>
 
     <NewsDetailPanel

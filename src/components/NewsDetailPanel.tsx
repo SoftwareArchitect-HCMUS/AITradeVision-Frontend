@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect } from "react";
+import { ScrollArea } from "./ui/scroll-area";
 
 interface NewsItem {
   id: string;
@@ -71,7 +72,7 @@ export function NewsDetailPanel({ news, isOpen, onClose }: NewsDetailPanelProps)
             </Button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6">
+          <ScrollArea className="flex-1 p-6">
             {news.summary && (
               <p className="text-sm text-muted-foreground leading-relaxed mb-4 font-medium">
                 {news.summary}
@@ -85,7 +86,7 @@ export function NewsDetailPanel({ news, isOpen, onClose }: NewsDetailPanelProps)
                 </p>
               ))}
             </div>
-          </div>
+          </ScrollArea>
 
           <div className="p-6 border-t border-border bg-secondary/20">
             <Button

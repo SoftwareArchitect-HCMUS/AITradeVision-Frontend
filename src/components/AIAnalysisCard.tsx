@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { useSymbolStore } from "@/store/useSymbolStore";
 import { useAIInsights } from "@/hooks/useAIInsights";
 import type { AIInsightData } from "@/services/market.service";
+import { ScrollArea } from "./ui/scroll-area";
 
 
 interface AIAnalysisCardProps {
@@ -57,7 +58,7 @@ export function AIAnalysisCard({ pair, isVIP }: AIAnalysisCardProps) {
 
       <div className="flex-1 min-h-0 relative overflow-hidden">
         {isVIP ? (
-          <div className="h-full overflow-y-auto p-4 space-y-4">
+          <ScrollArea className="h-full p-4">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="flex items-center gap-2">
@@ -143,7 +144,7 @@ export function AIAnalysisCard({ pair, isVIP }: AIAnalysisCardProps) {
                 </p>
               </div>
             )}
-          </div>
+          </ScrollArea>
         ) : (
           <div className="flex flex-col items-center justify-center p-6 h-full">
             <div className="p-4 rounded-full bg-secondary mb-4">
