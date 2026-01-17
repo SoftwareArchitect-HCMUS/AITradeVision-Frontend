@@ -27,7 +27,8 @@ export function TradingChart({
 
       try {
         const marketService = MarketService.getInstance();
-        const response = await marketService.getHistory({
+        // Use fallback method that tries DB first, then Binance API
+        const response = await marketService.getHistoryWithFallback({
           symbol,
           interval,
           limit: 100

@@ -160,8 +160,82 @@ export class MarketService {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  /**
+   * Get history from Binance API with Redis cache (fallback when DB has no data)
+   */
+  async getHistoryFromBinance(query: MarketHistoryQuery): Promise<MarketResponse<OHLCVData[]>> {
+    try {
+      const api = (await import('@/lib/api')).default;
+      const params = new URLSearchParams({
+        symbol: query.symbol,
+        interval: query.interval,
+        ...(query.limit && { limit: query.limit.toString() }),
+        ...(query.startTime && { startTime: query.startTime }),
+        ...(query.endTime && { endTime: query.endTime }),
+      });
+      const response = await api.get(`/market/history/binance?${params}`);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || 'Failed to fetch market history from Binance'
+      };
+    }
+  }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  /**
+   * Get history with automatic fallback to Binance if DB has insufficient data
+   */
+  async getHistoryWithFallback(query: MarketHistoryQuery): Promise<MarketResponse<OHLCVData[]>> {
+    // First try to get from local DB
+    const dbResponse = await this.getHistory(query);
+    
+    // If DB has enough data (at least 50 candles), use it
+    if (dbResponse.success && dbResponse.data.length >= 50) {
+      return dbResponse;
+    }
+    
+    // Fallback to Binance API
+    console.log('[MarketService] DB has insufficient data, falling back to Binance API');
+    return this.getHistoryFromBinance(query);
+  }
 
+  /**
+   * Get latest AI insights across all symbols
+   */
+  async getLatestAIInsights(limit: number = 20): Promise<MarketResponse<AIInsightData[]>> {
+    try {
+      const api = (await import('@/lib/api')).default;
+      const params = new URLSearchParams({
+        limit: limit.toString()
+      });
+      const response = await api.get(`/ai/insights/latest?${params}`);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || 'Failed to fetch latest AI insights'
+      };
+    }
+  }
+
+  /**
+   * Get AI insights for a specific news article
+   */
+  async getAIInsightsByNewsId(newsId: number): Promise<MarketResponse<AIInsightData[]>> {
+    try {
+      const api = (await import('@/lib/api')).default;
+      const response = await api.get(`/ai/insights/news/${newsId}`);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || 'Failed to fetch AI insights for news'
+      };
+    }
+  }
 }
+
