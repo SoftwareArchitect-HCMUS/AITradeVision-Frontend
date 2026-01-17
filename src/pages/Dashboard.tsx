@@ -9,7 +9,7 @@ const Dashboard = () => {
   const { selectedSymbol, setSelectedSymbol } = useSymbolStore()
   const [isVIP, setIsVIP] = useState(false)
   const [isPanelOpen, setIsPanelOpen] = useState(true)
-  const [timeframe, setTimeframe] = useState<Timeframe>("1D")
+  const [timeframe, setTimeframe] = useState<Timeframe>("1h")
 
   return (
     <div className="flex flex-col h-screen bg-background">

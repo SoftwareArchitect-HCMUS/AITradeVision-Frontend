@@ -34,12 +34,19 @@ export function TradingChart({
         });
 
         if (response.success && response.data) {
-          const formattedData = response.data.map(item => ({
-            x: new Date(item.timestamp),
-            y: [item.open, item.high, item.low, item.close]
-          }));
+          if (response.data.length === 0) {
+            setError('No historical data available for selected range');
+            setChartData([]);
+          } else {
+            const formattedData = response.data
+              .filter(item => typeof item.timestamp === 'number' && !isNaN(item.timestamp))
+              .map(item => ({
+                x: new Date(item.timestamp),
+                y: [item.open, item.high, item.low, item.close]
+              }));
 
-          setChartData(formattedData);
+            setChartData(formattedData);
+          }
         } else {
           setError(response.message || 'Failed to load chart data');
         }

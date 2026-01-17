@@ -12,10 +12,10 @@ interface CandlestickChartProps {
 }
 
 const timeframeToInterval: Record<Timeframe, TimeInterval> = {
-  "1H": "1h",
-  "4H": "4h",
-  "1D": "1d",
-  "1W": "1d",
+  "1m": "1m",
+  "5m": "5m",
+  "1h": "1h",
+  "1d": "1d",
 };
 
 export function CandlestickChart({ pair, timeframe, onTimeframeChange }: CandlestickChartProps) {
@@ -93,7 +93,7 @@ export function CandlestickChart({ pair, timeframe, onTimeframeChange }: Candles
           )}
         </div>
         <div className="flex space-x-2">
-          {(["1H", "4H", "1D", "1W"] as Timeframe[]).map((tf) => (
+          {(["1m", "5m", "1h", "1d"] as Timeframe[]).map((tf) => (
             <button
               key={tf}
               onClick={() => onTimeframeChange(tf)}
