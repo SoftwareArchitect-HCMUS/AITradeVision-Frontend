@@ -28,7 +28,7 @@ interface NewsDetailPanelProps {
 export function NewsDetailPanel({ news, isOpen, onClose }: NewsDetailPanelProps) {
   const { user } = useAuthStore();
   const { openModal } = useVIPModalStore();
-  const isVIP = user?.isVIP ?? false;
+  const isVIP = user?.isVip ?? false;
   
   // Fetch AI insights for this news article
   const newsId = news ? parseInt(news.id, 10) : null;
