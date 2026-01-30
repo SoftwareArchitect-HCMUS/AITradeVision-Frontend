@@ -1,4 +1,4 @@
-import { Moon, Sun, PanelRightClose, PanelRightOpen, Crown, Brain, LogOut, Sparkles } from "lucide-react";
+import { Moon, Sun, PanelRightClose, PanelRightOpen, Crown, Brain, LogOut, Sparkles, Settings } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useSymbols } from "@/hooks/useSymbols";
 import { useSymbolStore } from "@/store/useSymbolStore";
 import { useVIPModalStore } from "@/store/useVIPModalStore";
+import { useProfileModalStore } from "@/store/useProfileModalStore";
 
 import { type TradingPair } from "@/types/trading";
 
@@ -30,6 +31,7 @@ export function Header({
   const { selectedSymbol, setSelectedSymbol } = useSymbolStore();
   const { data: symbols = [], isLoading: symbolsLoading } = useSymbols();
   const { openModal } = useVIPModalStore();
+  const { openModal: openProfileModal } = useProfileModalStore();
 
   const symbolOptions = symbols.map(symbol => ({
     value: symbol,
@@ -84,9 +86,13 @@ export function Header({
 
       {/* Right Controls */}
       <div className="flex items-center gap-2">
-        <div className="text-sm text-muted-foreground mr-4">
-          Welcome, {user?.username}
-        </div>
+        <button
+          onClick={openProfileModal}
+          className="text-sm text-muted-foreground mr-2 hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"
+        >
+          <Settings className="h-4 w-4" />
+          {user?.username}
+        </button>
 
         {/* Theme Toggle */}
         <Button

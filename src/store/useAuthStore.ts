@@ -5,7 +5,7 @@ interface User {
   id: number
   email: string
   username: string
-  isVIP: boolean
+  isVip: boolean
 }
 
 interface AuthState {

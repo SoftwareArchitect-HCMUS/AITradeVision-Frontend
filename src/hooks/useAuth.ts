@@ -57,8 +57,8 @@ export function useAuth() {
   })
 
   const upgradeToVIP = useMutation({
-    mutationFn: async () => {
-      const response = await api.post('/auth/upgrade-vip')
+    mutationFn: async (paymentInfo: { cardNumber: string; expiry: string; cvv: string }) => {
+      const response = await api.post('/auth/upgrade-vip', paymentInfo)
       return response.data
     },
     onSuccess: (data) => {
@@ -79,6 +79,32 @@ export function useAuth() {
     },
   })
 
+  const updateProfile = useMutation({
+    mutationFn: async (profileData: { username?: string; email?: string; currentPassword?: string; newPassword?: string }) => {
+      const response = await api.put('/auth/profile', profileData)
+      return response.data
+    },
+    onSuccess: (data) => {
+      if (data.success && data.data) {
+        const currentToken = useAuthStore.getState().token
+        if (currentToken) {
+          setAuth(currentToken, data.data.user)
+        }
+        toast({
+          title: 'Profile updated',
+          description: 'Your profile has been updated successfully.',
+        })
+      }
+    },
+    onError: (error: Error & { response?: { data?: { message?: string } } }) => {
+      toast({
+        title: 'Update failed',
+        description: error.response?.data?.message || 'Failed to update profile',
+        variant: 'destructive',
+      })
+    },
+  })
+
   const logout = () => {
     clearAuth()
     navigate('/login')
@@ -93,6 +119,7 @@ export function useAuth() {
     register,
     logout,
     upgradeToVIP,
+    updateProfile,
   }
 }
 

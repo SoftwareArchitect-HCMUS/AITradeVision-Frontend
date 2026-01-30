@@ -10,8 +10,7 @@ const Dashboard = () => {
   const { selectedSymbol, setSelectedSymbol } = useSymbolStore()
   const { user } = useAuthStore()
   
-  // Use isVIP from authenticated user, default to false if not set
-  const isVIP = user?.isVIP ?? false
+  const isVIP = user?.isVip ?? false
   
   const [isPanelOpen, setIsPanelOpen] = useState(true)
   const [timeframe, setTimeframe] = useState<Timeframe>("1h")

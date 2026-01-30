@@ -36,25 +36,26 @@ export function UpgradeVIPModal() {
   const handlePayment = async () => {
     setIsProcessing(true);
     
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Call upgrade API
-    upgradeToVIP.mutate(undefined, {
-      onSuccess: () => {
-        setStep("success");
-        setIsProcessing(false);
-        // Auto close after 2.5 seconds
-        setTimeout(() => {
-          closeModal();
-          // Reset after modal animation
-          setTimeout(resetModal, 300);
-        }, 2500);
-      },
-      onError: () => {
-        setIsProcessing(false);
+    upgradeToVIP.mutate(
+      { 
+        cardNumber: cardNumber.replace(/\s/g, ''), 
+        expiry, 
+        cvv 
+      }, 
+      {
+        onSuccess: () => {
+          setStep("success");
+          setIsProcessing(false);
+          setTimeout(() => {
+            closeModal();
+            setTimeout(resetModal, 300);
+          }, 2500);
+        },
+        onError: () => {
+          setIsProcessing(false);
+        }
       }
-    });
+    );
   };
 
   const resetModal = () => {
