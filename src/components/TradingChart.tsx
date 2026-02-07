@@ -11,6 +11,14 @@ import {
 import { MarketService } from '@/services/market.service';
 import type { TimeInterval } from '@/services/market.service';
 import { useChartResize } from '@/hooks/useChartResize';
+import { useWebSocketPrice } from '@/hooks/useWebSocketPrice';
+
+const INTERVAL_MS: Record<TimeInterval, number> = {
+  '1m': 60 * 1000,
+  '5m': 5 * 60 * 1000,
+  '1h': 60 * 60 * 1000,
+  '1d': 24 * 60 * 60 * 1000,
+};
 
 interface TradingChartProps {
   symbol: string;
@@ -28,10 +36,13 @@ export function TradingChart({
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const lastCandleRef = useRef<{ time: UTCTimestamp; open: number; high: number; low: number; close: number } | null>(null);
   
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPrice, setCurrentPrice] = useState<{ open: number; high: number; low: number; close: number } | null>(null);
+
+  const { price } = useWebSocketPrice(symbol);
 
   // Handle responsive resizing
   useChartResize(chartContainerRef, chartRef);
@@ -43,28 +54,48 @@ export function TradingChart({
     const chart = createChart(chartContainerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: '#9ca3af', // text-muted-foreground
+        textColor: '#9ca3af',
       },
       grid: {
-        vertLines: { color: '#334155' }, // slate-700/50
+        vertLines: { color: '#334155' },
         horzLines: { color: '#334155' },
       },
       width: chartContainerRef.current.clientWidth,
       height: chartContainerRef.current.clientHeight,
+      localization: {
+        timeFormatter: (time: number) => {
+          const date = new Date(time * 1000);
+          return date.toLocaleString('vi-VN', { 
+            timeZone: 'Asia/Ho_Chi_Minh',
+            hour: '2-digit',
+            minute: '2-digit',
+            day: '2-digit',
+            month: '2-digit'
+          });
+        },
+      },
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
         borderColor: '#334155',
+        tickMarkFormatter: (time: number) => {
+          const date = new Date(time * 1000);
+          return date.toLocaleTimeString('vi-VN', { 
+            timeZone: 'Asia/Ho_Chi_Minh',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        },
       },
       rightPriceScale: {
         borderColor: '#334155',
         autoScale: true,
       },
       crosshair: {
-        mode: 1, // Magnet mode
+        mode: 1,
         vertLine: {
           width: 1,
-          color: '#eab308', // yellow-500
+          color: '#eab308',
           style: 0,
           labelBackgroundColor: '#eab308',
         },
@@ -172,6 +203,33 @@ export function TradingChart({
       loadData();
     }
   }, [symbol, interval]);
+
+  useEffect(() => {
+    if (!price || !candlestickSeriesRef.current) return;
+
+    const intervalMs = INTERVAL_MS[interval];
+    const now = Date.now();
+    const candleTime = Math.floor(now / intervalMs) * intervalMs / 1000;
+
+    if (!lastCandleRef.current || lastCandleRef.current.time !== candleTime) {
+      lastCandleRef.current = {
+        time: candleTime as UTCTimestamp,
+        open: price,
+        high: price,
+        low: price,
+        close: price,
+      };
+    } else {
+      lastCandleRef.current = {
+        ...lastCandleRef.current,
+        high: Math.max(lastCandleRef.current.high, price),
+        low: Math.min(lastCandleRef.current.low, price),
+        close: price,
+      };
+    }
+
+    candlestickSeriesRef.current.update(lastCandleRef.current);
+  }, [price, interval]);
 
   return (
     <div className={`relative w-full h-full ${className} select-none`}>

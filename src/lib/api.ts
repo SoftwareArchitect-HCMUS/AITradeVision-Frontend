@@ -28,10 +28,15 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      import('@/store/useAuthStore').then(({ useAuthStore }) => {
-        useAuthStore.getState().clearAuth()
-        window.location.href = '/login'
-      })
+      const currentPath = window.location.pathname
+      const isAuthPage = currentPath === '/login' || currentPath === '/register'
+      
+      if (!isAuthPage) {
+        import('@/store/useAuthStore').then(({ useAuthStore }) => {
+          useAuthStore.getState().clearAuth()
+          window.location.href = '/login'
+        })
+      }
     }
     return Promise.reject(error)
   }
