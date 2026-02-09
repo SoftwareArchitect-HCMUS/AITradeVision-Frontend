@@ -5,12 +5,17 @@ import { RightPanel } from "@/components/RightPanel"
 import { type TradingPair, type Timeframe } from "@/types/trading"
 import { useSymbolStore } from "@/store/useSymbolStore"
 import { useAuthStore } from "@/store/useAuthStore"
+import { useWebSocketPrice } from "@/hooks/useWebSocketPrice"
+import { useDocumentTitle } from "@/hooks/useDocumentTitle"
 
 const Dashboard = () => {
   const { selectedSymbol, setSelectedSymbol } = useSymbolStore()
   const { user } = useAuthStore()
   
   const isVIP = user?.isVip ?? false
+  
+  const { price } = useWebSocketPrice(selectedSymbol)
+  useDocumentTitle(price, selectedSymbol)
   
   const [isPanelOpen, setIsPanelOpen] = useState(true)
   const [timeframe, setTimeframe] = useState<Timeframe>("1h")
