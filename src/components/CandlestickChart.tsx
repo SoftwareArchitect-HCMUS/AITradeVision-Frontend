@@ -214,6 +214,7 @@ export function CandlestickChart({ pair, timeframe, onTimeframeChange }: Candles
 
       <div className="flex-1 min-h-0 overflow-hidden">
         <TradingChart
+          key={timeframeToInterval[timeframe]}
           symbol={pair}
           interval={timeframeToInterval[timeframe]}
           height={chartHeight}

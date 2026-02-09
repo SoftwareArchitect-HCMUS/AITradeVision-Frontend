@@ -67,6 +67,8 @@ export function TradingChart({
   const chartDataRef = useRef<ChartDataPoint[]>([]);
   const newsDataRef = useRef<NewsData[]>([]);
   
+  // Track chart initialization state to prevent race conditions
+  const [chartReady, setChartReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPrice, setCurrentPrice] = useState<{ open: number; high: number; low: number; close: number } | null>(null);
@@ -305,9 +307,16 @@ export function TradingChart({
       }
     });
 
+    // Mark chart as ready after full initialization
+    setChartReady(true);
+
     return () => {
+      setChartReady(false);
       chart.remove();
       chartRef.current = null;
+      candlestickSeriesRef.current = null;
+      smaSeriesRef.current = null;
+      emaSeriesRef.current = null;
       markersPluginRef.current = null;
     };
   }, []);
@@ -333,8 +342,16 @@ export function TradingChart({
     }
   }, [indicators, updateIndicators]);
 
-  // Load Data
+  // Load Data - only when chart is ready
   useEffect(() => {
+    // Wait for chart to be fully initialized
+    if (!chartReady) return;
+    
+    let isMounted = true;
+    
+    // Reset last candle ref when interval changes to prevent stale data
+    lastCandleRef.current = null;
+
     const loadData = async () => {
       setIsLoading(true);
       setError(null);
@@ -348,6 +365,9 @@ export function TradingChart({
           interval,
           limit: 1000
         });
+
+        // Check if component is still mounted and chart is still valid
+        if (!isMounted || !candlestickSeriesRef.current) return;
 
         if (response.success && response.data) {
           if (response.data.length === 0) {
@@ -366,18 +386,21 @@ export function TradingChart({
 
             const uniqueData = formattedData.filter((v, i, a) => a.findIndex(t => (t.time === v.time)) === i);
             
+            // Double check refs are still valid before updating
+            if (!isMounted || !candlestickSeriesRef.current) return;
+            
             chartDataRef.current = uniqueData;
-            candlestickSeriesRef.current?.setData(uniqueData);
+            candlestickSeriesRef.current.setData(uniqueData);
             chartRef.current?.timeScale().fitContent();
             
             // Update indicators
             updateIndicators(uniqueData);
 
             // Load news for markers
-            if (showNewsMarkers) {
+            if (showNewsMarkers && isMounted) {
               try {
                 const newsResponse = await marketService.getNews(100, 1);
-                if (newsResponse.success && newsResponse.data) {
+                if (isMounted && newsResponse.success && newsResponse.data) {
                   newsDataRef.current = newsResponse.data.news;
                   updateNewsMarkers(uniqueData, newsResponse.data.news);
                 }
@@ -388,20 +411,28 @@ export function TradingChart({
             }
           }
         } else {
-          setError(response.message || 'Failed to load chart data');
+          if (isMounted) {
+            setError(response.message || 'Failed to load chart data');
+          }
         }
       } catch (err) {
         console.error(err);
-        setError('Failed to load chart data');
+        if (isMounted) {
+          setError('Failed to load chart data');
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    if (candlestickSeriesRef.current) {
-      loadData();
-    }
-  }, [symbol, interval, showNewsMarkers, updateIndicators, updateNewsMarkers]);
+    loadData();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [symbol, interval, showNewsMarkers, chartReady, updateIndicators, updateNewsMarkers]);
 
   // Handle real-time price updates
   useEffect(() => {
