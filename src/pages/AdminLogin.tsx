@@ -2,9 +2,12 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react"
-import { Link } from "react-router-dom"
-import { useAuth } from "@/hooks/useAuth"
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
+import { useMutation } from "@tanstack/react-query"
+import api from "@/lib/api"
+import { useAuthStore } from "@/store/useAuthStore"
+import { toast } from "@/hooks/use-toast"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,9 +28,43 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>
 
-export default function Login() {
+export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false)
-  const { login } = useAuth()
+  const navigate = useNavigate()
+  const { setAuth } = useAuthStore()
+
+  const login = useMutation({
+    mutationFn: async (credentials: { email: string; password: string }) => {
+      const response = await api.post('/auth/login', credentials)
+      return response.data
+    },
+    onSuccess: (data) => {
+      if (data.success && data.data) {
+        const user = data.data.user
+        if (user.role !== 'admin') {
+          toast({
+            title: 'Access Denied',
+            description: 'This account does not have admin privileges.',
+            variant: 'destructive',
+          })
+          return
+        }
+        setAuth(data.data.token, user)
+        navigate('/admin')
+        toast({
+          title: 'Welcome, Admin',
+          description: 'You have successfully signed in to the admin panel.',
+        })
+      }
+    },
+    onError: (error: Error & { response?: { data?: { message?: string } } }) => {
+      toast({
+        title: 'Login failed',
+        description: error.response?.data?.message || 'Invalid credentials',
+        variant: 'destructive',
+      })
+    },
+  })
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -42,20 +79,23 @@ export default function Login() {
   }
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/20">
+    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/10">
       <div className="w-full max-w-md space-y-6 px-4">
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Welcome Back</h1>
+          <div className="flex items-center justify-center gap-2">
+            <Shield className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold tracking-tight">Admin Portal</h1>
+          </div>
           <p className="text-muted-foreground">
-            Sign in to your AI Trade Vision account
+            Sign in to the AI Trade Vision admin panel
           </p>
         </div>
 
-        <Card className="border-border/50 shadow-lg">
+        <Card className="border-primary/20 shadow-lg shadow-primary/5">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Sign In</CardTitle>
+            <CardTitle className="text-2xl text-center">Admin Sign In</CardTitle>
             <CardDescription className="text-center">
-              Enter your credentials to access your account
+              Enter your admin credentials to continue
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -71,7 +111,7 @@ export default function Login() {
                         <div className="relative">
                           <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input
-                            placeholder="Enter your email"
+                            placeholder="admin@example.com"
                             className="pl-10"
                             {...field}
                           />
@@ -115,17 +155,9 @@ export default function Login() {
                   )}
                 />
 
-                <div className="flex items-center justify-between">
-                  <div className="text-sm">
-                    <a href="#" className="text-primary hover:underline">
-                      Forgot password?
-                    </a>
-                  </div>
-                </div>
-
                 <Button
                   type="submit"
-                  className="w-full bg-bullish hover:bg-bullish/90"
+                  className="w-full"
                   disabled={login.isPending}
                 >
                   {login.isPending ? (
@@ -135,7 +167,8 @@ export default function Login() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      Sign In
+                      <Shield className="h-4 w-4" />
+                      Sign In as Admin
                       <ArrowRight className="h-4 w-4" />
                     </div>
                   )}
@@ -144,36 +177,16 @@ export default function Login() {
             </Form>
 
             <div className="mt-6 text-center text-sm">
-              <span className="text-muted-foreground">Don't have an account? </span>
+              <span className="text-muted-foreground">Not an admin? </span>
               <Link
-                to="/register"
+                to="/login"
                 className="text-primary hover:underline font-medium"
               >
-                Sign up
+                Go to User Login
               </Link>
             </div>
           </CardContent>
         </Card>
-
-        <div className="text-center text-xs text-muted-foreground">
-          By signing in, you agree to our{" "}
-          <a href="#" className="hover:underline">
-            Terms of Service
-          </a>{" "}
-          and{" "}
-          <a href="#" className="hover:underline">
-            Privacy Policy
-          </a>
-        </div>
-
-        <div className="text-center text-sm">
-          <Link
-            to="/admin/login"
-            className="text-muted-foreground hover:text-primary hover:underline"
-          >
-            Admin Login →
-          </Link>
-        </div>
       </div>
     </div>
   )

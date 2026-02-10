@@ -3,6 +3,10 @@ import { AuthGuard } from "@/components/AuthGuard"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import Dashboard from "./pages/Dashboard"
+import { AdminLayout } from "@/layouts/AdminLayout"
+import AdminDashboard from "@/pages/admin/Dashboard"
+import UserManagement from "@/pages/admin/UserManagement"
+import AdminLogin from "@/pages/AdminLogin"
 
 const App = () => (
   <Routes>
@@ -16,6 +20,11 @@ const App = () => (
         </AuthGuard>
       }
     />
+    <Route path="/admin/login" element={<AdminLogin />} />
+    <Route path="/admin" element={<AdminLayout />}>
+      <Route index element={<AdminDashboard />} />
+      <Route path="users" element={<UserManagement />} />
+    </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
 )
